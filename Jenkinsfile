@@ -7,7 +7,7 @@ pipeline {
     }
 
     environment {
-        IMAGE_NAME = 'prateekguvi/kanban-dashboard'
+        IMAGE_NAME = 'prateekdz/kanban-dashboard'
         CONTAINER_NAME = 'kanban-dashboard'
         HOST_PORT = '80'
         CONTAINER_PORT = '8080'
@@ -43,7 +43,7 @@ pipeline {
                 sh '''
                     docker run --rm \
                       --volume "$WORKSPACE:/repo:ro" \
-                      gitleaks/gitleaks:v8.24.3 \
+                      zricethezav/gitleaks:v8.24.3 \
                       detect --source=/repo --redact
                 '''
                 sh '''
@@ -227,6 +227,7 @@ pipeline {
         always {
             sh '''
                 set -eu
+                PREVIOUS_IMAGE="${PREVIOUS_IMAGE:-}"
                 if [ -n "${GIT_SHA:-}" ] &&
                    [ "$IMAGE_NAME:$GIT_SHA" != "$PREVIOUS_IMAGE" ] &&
                    docker image inspect "$IMAGE_NAME:$GIT_SHA" >/dev/null 2>&1; then
