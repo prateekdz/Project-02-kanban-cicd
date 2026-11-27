@@ -212,6 +212,7 @@ pipeline {
             steps {
                 sh '''
                     set -eu
+                    PREVIOUS_IMAGE="${PREVIOUS_IMAGE:-}"
                     for image in $(docker image ls --format '{{.Repository}}:{{.Tag}}' "$IMAGE_NAME"); do
                       if [ "$image" != "$IMAGE_NAME:$BUILD_NUMBER" ] &&
                          [ "$image" != "$PREVIOUS_IMAGE" ]; then
