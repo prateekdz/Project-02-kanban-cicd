@@ -77,3 +77,5 @@ export default defineConfig([
 The `Jenkinsfile` expects a Linux Jenkins agent on the target EC2 instance with Docker, `curl`, and permission to use the Docker daemon. It builds `prateekdz/kanban-dashboard`, maps host port 80 to the container's port 8080, and checks `http://127.0.0.1:80/`. The container serves the static Vite build with Nginx; replacing it can briefly interrupt traffic, and a failed health check restores the previous image.
 
 Configure a Jenkins **Username with password** credential with ID `dockerhub-credentials`. Use the Docker Hub username and an access token as the password. The pipeline does not require long-lived AWS access keys; keep AWS permissions on the EC2 instance profile if AWS API access is added later.
+
+Webhook test
