@@ -22,19 +22,13 @@
 
 ## Main application layout
 
-![Original Kanban Task Manager layout](./screenshots/01-local-application/02-local-application.png)
+![Original Kanban Task Manager layout](./screenshots/01-local-application/01-local-application.png)
 
 <p align="center"><em>The supplied local application layout is the primary project presentation.</em></p>
 
-## Additional design exploration
-
-![Supplemental Boardly design preview](./screenshots/01-local-application/00-boardly-preview.png)
-
-<p align="center"><em>Boardly is an extra local visual refresh with synthetic demo tasks, not the primary project layout or a live-deployment screenshot.</em></p>
-
 ## Overview
 
-The Kanban Task Manager is a browser-based task board organized around three workflow states: **To do**, **In progress**, and **Completed**. It pairs a React application with a Jenkins pipeline that builds, scans, publishes, and deploys a Docker image using a blue-green Nginx switch. The Boardly preview above is a supplemental visual refresh.
+The Kanban Task Manager is a browser-based task board organized around three workflow states: **To do**, **In progress**, and **Completed**. It pairs a React application with a Jenkins pipeline that builds, scans, publishes, and deploys a Docker image using a blue-green Nginx switch.
 
 The app is intentionally local-first: tasks are saved in the current browser's `localStorage`. There is no account system, API, or cross-device synchronization.
 
@@ -102,11 +96,11 @@ Jenkins creates the Nginx site configuration during deployment. A separate Nginx
 │   ├── context/TaskContext.tsx
 │   ├── lib/storage.ts
 │   └── types/
-├── screenshots/     # Supplied evidence images and current UI preview
+├── screenshots/     # Retained evidence screenshots
 └── evidence/        # Stage indexes linking to screenshots/
 ```
 
-Original screenshots are preserved locally in the Git-ignored `screenshots-original/` directory; they are not included in the repository or Docker build context.
+Only retained screenshots are included in the gallery; removed captures are not represented by placeholders.
 
 ## Run locally
 
@@ -219,11 +213,10 @@ curl -fsS http://16.4.49.225/
 
 ## Screenshots and evidence
 
-- [Screenshot gallery and original-filename mapping](./screenshots/README.md) contains the primary app capture, the optional Boardly preview, and 19 supplied screenshots.
+- [Screenshot gallery and retained-image inventory](./screenshots/README.md) contains the primary app capture and 17 retained evidence screenshots.
 - [Stage-based evidence index](./evidence/README.md) links to the same images without duplicating them.
-- Originals are preserved locally in the Git-ignored `screenshots-original/` folder; review them for sensitive AWS and host details before sharing.
 
-The supplied captures do **not** include Gitleaks/Trivy output or a dedicated rollback test. The webhook capture says the hook had never been triggered at capture time. Historical screenshots do not prove that the current local revision is deployed.
+The retained captures do **not** include Gitleaks/Trivy output or a dedicated rollback test. The webhook capture says the hook had never been triggered at capture time. Historical screenshots do not prove that the current local revision is deployed.
 
 ## Verification status
 

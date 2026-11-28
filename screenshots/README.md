@@ -1,44 +1,36 @@
 # Screenshots and evidence
 
-This is the single image store. The `evidence/` directory contains stage-based indexes that link here, avoiding duplicate image copies.
+This is the single image store. The `evidence/` directory contains stage-based indexes that link here, avoiding duplicate image copies. This gallery lists only screenshots that are currently present.
 
 ## Main application layout
 
-![Original Kanban Task Manager layout](./01-local-application/02-local-application.png)
+![Original Kanban Task Manager layout](./01-local-application/01-local-application.png)
 
 This supplied local application screenshot represents the primary project layout.
 
-## Additional Boardly design
+## Retained screenshots
 
-![Supplemental Boardly UI with sample tasks](./01-local-application/00-boardly-preview.png)
+The following 17 retained captures are linked from the stage-based evidence indexes. The project-structure and local HTTP-response screenshots, along with the supplemental Boardly preview, are no longer included.
 
-This is an extra local design exploration captured with synthetic demo tasks. It is not the primary project layout or a screenshot of the live deployment, and is intentionally not mapped to a supplied original screenshot.
-
-## Supplied screenshot mapping
-
-The following 19 descriptive copies correspond one-to-one with the supplied originals. The originals remain unchanged in the locally Git-ignored `screenshots-original/` folder. Remove passwords, access tokens, and private keys before sharing screenshots.
-
-| Original filename | Renamed copy |
+| Capture | Screenshot |
 | --- | --- |
-| `02-project-structure.png` | [01-project-structure.png](./01-local-application/01-project-structure.png) |
-| `03-local-application.png` | [02-local-application.png](./01-local-application/02-local-application.png) |
-| `04-local-curl-response.png` | [03-local-curl-response.png](./01-local-application/03-local-curl-response.png) |
-| `Screenshot 2026-11-26 132310.png` | [01-docker-engine-smoke-test.png](./02-docker-build/01-docker-engine-smoke-test.png) |
-| `Screenshot 2026-11-26 140059.png` | [04-vite-dev-server.png](./01-local-application/04-vite-dev-server.png) |
-| `Screenshot 2026-11-26 140524.png` | [05-local-browser.png](./01-local-application/05-local-browser.png) |
-| `Screenshot 2026-11-26 140725.png` | [06-task-interaction.png](./01-local-application/06-task-interaction.png) |
-| `Screenshot 2026-11-26 151701.png` | [01-dockerhub-repository-tag.png](./04-docker-hub/01-dockerhub-repository-tag.png) |
-| `Screenshot 2026-11-27 130738.png` | [01-ec2-shell.png](./05-aws-ec2/01-ec2-shell.png) |
-| `Screenshot 2026-11-27 134042.png` | [02-docker-service-active.png](./05-aws-ec2/02-docker-service-active.png) |
-| `Screenshot 2026-11-27 142615.png` | [01-jenkins-unlock-screen.png](./06-jenkins/01-jenkins-unlock-screen.png) |
-| `Screenshot 2026-11-27 143810.png` | [02-jenkins-dashboard.png](./06-jenkins/02-jenkins-dashboard.png) |
-| `Screenshot 2026-11-27 183801.png` | [01-console-success.png](./08-pipeline-success/01-console-success.png) |
-| `Screenshot 2026-11-27 183822.png` | [01-build-history-with-failed-run.png](./09-pipeline-failure/01-build-history-with-failed-run.png) |
-| `Screenshot 2026-11-27 183857.png` | [02-successful-build-details.png](./08-pipeline-success/02-successful-build-details.png) |
-| `Screenshot 2026-11-27 192453.png` | [01-webhook-not-triggered.png](./07-github-webhook/01-webhook-not-triggered.png) |
-| `Screenshot 2026-11-28 131941.png` | [03-container-resource-usage.png](./05-aws-ec2/03-container-resource-usage.png) |
-| `Screenshot 2026-11-28 134222.png` | [01-live-application.png](./12-live-application/01-live-application.png) |
-| `Screenshot 2026-11-28 134249.png` | [01-green-container-http-200.png](./10-health-check/01-green-container-http-200.png) |
+| Primary local application | [01-local-application.png](./01-local-application/01-local-application.png) |
+| Vite development server | [02-vite-dev-server.png](./01-local-application/02-vite-dev-server.png) |
+| Local browser | [03-local-browser.png](./01-local-application/03-local-browser.png) |
+| Task interaction | [04-task-interaction.png](./01-local-application/04-task-interaction.png) |
+| Docker engine smoke test | [01-docker-engine-smoke-test.png](./02-docker-build/01-docker-engine-smoke-test.png) |
+| Docker Hub repository tag | [01-dockerhub-repository-tag.png](./04-docker-hub/01-dockerhub-repository-tag.png) |
+| EC2 shell | [01-ec2-shell.png](./05-aws-ec2/01-ec2-shell.png) |
+| Docker service status | [02-docker-service-active.png](./05-aws-ec2/02-docker-service-active.png) |
+| Container resource usage | [03-container-resource-usage.png](./05-aws-ec2/03-container-resource-usage.png) |
+| Jenkins unlock screen | [01-jenkins-unlock-screen.png](./06-jenkins/01-jenkins-unlock-screen.png) |
+| Jenkins dashboard | [02-jenkins-dashboard.png](./06-jenkins/02-jenkins-dashboard.png) |
+| Successful build console | [01-console-success.png](./08-pipeline-success/01-console-success.png) |
+| Successful build details | [02-successful-build-details.png](./08-pipeline-success/02-successful-build-details.png) |
+| Failed build history | [01-build-history-with-failed-run.png](./09-pipeline-failure/01-build-history-with-failed-run.png) |
+| Webhook status | [01-webhook-not-triggered.png](./07-github-webhook/01-webhook-not-triggered.png) |
+| Green container HTTP check | [01-green-container-http-200.png](./10-health-check/01-green-container-http-200.png) |
+| Live application | [01-live-application.png](./12-live-application/01-live-application.png) |
 
 ## Evidence status
 

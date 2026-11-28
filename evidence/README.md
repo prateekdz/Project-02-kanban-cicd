@@ -1,10 +1,10 @@
 # Deployment evidence
 
-This directory is the stage-based evidence index. Screenshots are stored once in [`screenshots/`](../screenshots/README.md); the supplied originals remain unchanged in the locally ignored `screenshots-original/` folder. The screenshot inventory maps each supplied original filename to its renamed copy. Missing screenshots are identified explicitly rather than represented as completed evidence.
+This directory is the stage-based evidence index. Screenshots are stored once in [`screenshots/`](../screenshots/README.md), which lists the retained images. Missing screenshots are identified explicitly rather than represented as completed evidence.
 
 | Folder | Supplied evidence |
 | --- | --- |
-| [01-local-application](./01-local-application/README.md) | Project structure, local UI, Vite server, and local HTTP response |
+| [01-local-application](./01-local-application/README.md) | Local UI, Vite server, browser, and task interaction; project-structure and local HTTP-response screenshots are absent |
 | [02-docker-build](./02-docker-build/README.md) | Docker engine and Hello World smoke test only; no project image-build screenshot was supplied |
 | [03-docker-security](./03-docker-security/README.md) | No Gitleaks or Trivy scan screenshot was supplied |
 | [04-docker-hub](./04-docker-hub/README.md) | Docker Hub repository page showing the `v1` tag |
@@ -19,7 +19,7 @@ This directory is the stage-based evidence index. Screenshots are stored once in
 
 ## Local application
 
-![Local Kanban application](../screenshots/01-local-application/02-local-application.png)
+![Local Kanban application](../screenshots/01-local-application/01-local-application.png)
 
 ## Pipeline success
 
