@@ -79,3 +79,5 @@ The `Jenkinsfile` expects a Linux Jenkins agent on the target EC2 instance with 
 Configure a Jenkins **Username with password** credential with ID `dockerhub-credentials`. Use the Docker Hub username and an access token as the password. The pipeline does not require long-lived AWS access keys; keep AWS permissions on the EC2 instance profile if AWS API access is added later.
 
 Webhook test
+
+Deployment verification test
