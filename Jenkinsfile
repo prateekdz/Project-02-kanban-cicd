@@ -79,7 +79,6 @@ pipeline {
             }
         }
 
-        // Steps 5 through 11: Pull, Start with limits, Health Check, Nginx Switch, Public URL Check, Stop Old
         stage('Deploy & Switch Traffic') {
             steps {
                 script {
@@ -94,7 +93,7 @@ pipeline {
                     env.NEW_PORT      = newPort
                 }
 
-                // 5. Pull new image on EC2, 6. Start new container, 7. Apply CPU and memory limits
+                // Start Green with limits and verify it before changing Nginx.
                 sh '''
                     set -eu
                     docker pull "$IMAGE_NAME:$BUILD_NUMBER"
@@ -107,42 +106,74 @@ pipeline {
                         --cpus=1.0 \
                         -p "127.0.0.1:${NEW_PORT}:${CONTAINER_PORT}" \
                         "$IMAGE_NAME:$BUILD_NUMBER"
-                '''
 
-                // 8. Verify the new container's health
-                sh '''
-                    set -eu
                     for i in $(seq 1 20); do
                         if curl -fsS "http://127.0.0.1:${NEW_PORT}/" >/dev/null; then
-                            echo "Health check passed for ${NEW_CONTAINER} on port ${NEW_PORT}"
+                            echo "Green container ${NEW_CONTAINER} is healthy on port ${NEW_PORT}"
                             exit 0
                         fi
                         sleep 2
                     done
-                    echo "Health check failed for ${NEW_CONTAINER}; rolling back" >&2
+                    echo "Green container health check failed; Blue remains untouched" >&2
                     docker logs "$NEW_CONTAINER" || true
                     docker rm -f "$NEW_CONTAINER" || true
                     exit 1
                 '''
 
-                // 9. Switch Nginx traffic to the new container
+                // Keep the active config available so any failed switch can restore Blue.
                 sh '''
                     set -eu
-                    printf 'server {\n    listen 80;\n    server_name _;\n    location / {\n        proxy_pass http://127.0.0.1:%s;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n    }\n}\n' "${NEW_PORT}" | sudo tee /etc/nginx/conf.d/kanban.conf >/dev/null
-                    sudo nginx -t
-                    sudo systemctl reload nginx
-                '''
+                    config=/etc/nginx/conf.d/kanban.conf
+                    backup=/etc/nginx/conf.d/kanban.conf.bak
 
-                // 10. Confirm public URL works & 11. Stop old container only after success
-                sh '''
-                    set -eu
-                    curl -fsS "${PUBLIC_URL}/" >/dev/null
-                    echo "Public URL ${PUBLIC_URL} verified!"
+                    if [ -f "$config" ]; then
+                        sudo cp "$config" "$backup"
+                    else
+                        sudo rm -f "$backup"
+                    fi
 
+                    restore_previous() {
+                        echo "Switch or public URL check failed; restoring previous Nginx config..." >&2
+                        if [ -f "$backup" ]; then
+                            if sudo cp "$backup" "$config" &&
+                               sudo nginx -t &&
+                               sudo systemctl reload nginx; then
+                                echo "Previous Nginx config restored and reloaded."
+                            else
+                                echo "Failed to fully restore the previous Nginx config." >&2
+                            fi
+                        else
+                            echo "No previous Nginx config backup is available." >&2
+                        fi
+                        docker rm -f "$NEW_CONTAINER" 2>/dev/null || true
+                    }
+
+                    if ! printf 'server {\n    listen 80;\n    server_name _;\n    location / {\n        proxy_pass http://127.0.0.1:%s;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_set_header X-Forwarded-Proto $scheme;\n    }\n}\n' "${NEW_PORT}" |
+                        sudo tee "$config" >/dev/null; then
+                        restore_previous
+                        exit 1
+                    fi
+
+                    if ! sudo nginx -t; then
+                        restore_previous
+                        exit 1
+                    fi
+
+                    if ! sudo systemctl reload nginx; then
+                        restore_previous
+                        exit 1
+                    fi
+
+                    if ! curl -fsS "${PUBLIC_URL}/" >/dev/null; then
+                        restore_previous
+                        exit 1
+                    fi
+
+                    echo "Public URL verified on Green (${NEW_CONTAINER})."
                     if [ -n "${OLD_CONTAINER:-}" ] && [ "${OLD_CONTAINER}" != "${NEW_CONTAINER}" ]; then
                         docker stop "$OLD_CONTAINER" || true
                         docker rm "$OLD_CONTAINER" || true
-                        echo "Stopped and removed old container ${OLD_CONTAINER}"
+                        echo "Stopped and removed old Blue container ${OLD_CONTAINER}"
                     fi
                 '''
             }
