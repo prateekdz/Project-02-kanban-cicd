@@ -1,22 +1,22 @@
 # Docker security scan evidence
 
-## Evidence status: Not supplied
+## Evidence status: unavailable
 
-No genuine Gitleaks or Trivy scan output was included with the supplied screenshots. This folder contains no scan-result images; that absence does not mean a scan passed.
+This folder contains no scan-result screenshots or exported logs. That means scan results are **not evidenced here**; it does not mean a scan passed or failed.
 
-## Checks configured in Jenkins
+## Jenkins scan configuration
 
-The [`Jenkinsfile`](../../Jenkinsfile) runs a **Scan** stage after building the image and before publishing it:
+The [Jenkinsfile](../../Jenkinsfile) defines a **Scan** stage after the image is built and before it is published:
 
-| Scanner | Target | Pipeline behavior |
+| Scanner | Target | Configured result |
 | --- | --- | --- |
-| Gitleaks `v8.24.3` | Checked-out workspace, mounted read-only | Scans with `detect --redact`; detected secrets fail the command. |
-| Trivy `0.59.1` | Image tagged with the Jenkins build number | Scans HIGH and CRITICAL findings; `--exit-code 1` fails the stage when either severity is found. |
+| Gitleaks `v8.24.3` | Checked-out workspace, mounted read-only | Runs `detect --source=/repo --redact`; detected secrets fail the command. |
+| Trivy `0.59.1` | Image tagged with the Jenkins build number | Checks HIGH and CRITICAL findings; `--exit-code 1` fails the command when either severity is found. |
 
-These are pipeline configuration details, not proof that the scans ran successfully for a particular build. No scan result or build-specific status is available in this evidence folder.
+This describes pipeline configuration only. It does not verify that either scanner ran successfully for a specific build.
 
-## Completing the evidence
+## Evidence needed
 
-To add evidence, capture the actual Jenkins console output for a run of the **Scan** stage. Include the build number, commit, image tag, scanner output, and final stage result. Remove passwords, access tokens, private keys, and other credentials. Do not create or label a result screenshot unless it came from a real scan run.
+For a real scan run, save the Jenkins console output showing the build number, commit SHA, image tag, both scanner results, and the final **Scan** stage status. Redact passwords, access tokens, private keys, and other credentials. Only label a capture as a successful scan when the actual output shows that result.
 
-For the complete screenshot inventory, see the [screenshots index](../README.md) and [deployment evidence index](../../evidence/README.md).
+See the [screenshots index](../README.md) for the full image inventory and the [deployment evidence index](../../evidence/README.md) for stage-by-stage status.
