@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Priority, Status } from '../../types/tasks'
 import { useTaskContext } from '../../context/TaskContext'
 
@@ -11,15 +11,18 @@ type Props = {
 function parseTags(input: string) {
   return input
     .split(',')
-    .map((t) => t.trim())
+    .map((tag) => tag.trim())
     .filter(Boolean)
 }
 
 const PRIORITIES: Priority[] = ['low', 'medium', 'high']
+const CONTROL_CLASS =
+  'rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100'
 
 export function TaskModal({ taskId, onClose }: Props) {
   const { tasksById, updateTask } = useTaskContext()
   const task = tasksById[taskId]
+  const dialogRef = useRef<HTMLDivElement>(null)
 
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState<Status>('todo')
@@ -39,128 +42,164 @@ export function TaskModal({ taskId, onClose }: Props) {
   }, [taskId, task])
 
   useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const focusableElements = () =>
+      Array.from(
+        dialogRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        ) ?? []
+      )
+
+    focusableElements()[0]?.focus()
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        onClose()
+        return
+      }
+
+      if (event.key !== 'Tab') return
+      const focusable = focusableElements()
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (!first || !last) return
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
+
     window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = previousOverflow
+      previousFocus?.focus()
+    }
   }, [onClose])
 
   if (!task) return null
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      onMouseDown={(e) => {
-        // Close when clicking on the overlay.
-        if (e.currentTarget === e.target) onClose()
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 backdrop-blur-[2px] sm:p-5"
+      onMouseDown={(event) => {
+        if (event.currentTarget === event.target) onClose()
       }}
     >
       <div
-        className="w-full max-w-2xl overflow-hidden rounded-2xl border bg-white shadow-xl"
+        ref={dialogRef}
+        className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
         role="dialog"
         aria-modal="true"
-        aria-label="Task details"
+        aria-labelledby="task-dialog-title"
       >
-        <div className="flex items-start justify-between gap-3 border-b p-4">
+        <div className="flex items-start justify-between gap-3 border-b border-slate-100 p-5">
           <div className="min-w-0">
-            <h3 className="truncate text-base font-semibold text-gray-900">{title}</h3>
-            <p className="mt-1 text-xs text-gray-500">
+            <h2 id="task-dialog-title" className="truncate text-lg font-bold text-slate-900">
+              {title}
+            </h2>
+            <p className="mt-1 text-xs text-slate-500">
               Created {new Date(task.createdAt).toLocaleString()}
             </p>
           </div>
           <button
             type="button"
-            className="rounded-lg border border-gray-200 bg-white px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             onClick={onClose}
+            aria-label="Close task details"
           >
             Close
           </button>
         </div>
 
-        <div className="p-4">
-          <div className="grid gap-3 md:grid-cols-2">
-            <label className="md:col-span-2 flex flex-col gap-1">
-              <span className="text-xs font-semibold text-gray-700">Description</span>
+        <div className="max-h-[70vh] overflow-y-auto p-5">
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-1.5 md:col-span-2">
+              <span className="text-xs font-semibold text-slate-700">Description</span>
               <textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="min-h-[120px] resize-y rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+                onChange={(event) => setDescription(event.target.value)}
+                className={`${CONTROL_CLASS} min-h-[120px] resize-y`}
               />
             </label>
 
-            <label className="flex flex-col gap-1">
-              <span className="text-xs font-semibold text-gray-700">Status</span>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-slate-700">Status</span>
               <select
                 value={status}
-                onChange={(e) => setStatus(e.target.value as Status)}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+                onChange={(event) => setStatus(event.target.value as Status)}
+                className={CONTROL_CLASS}
               >
-                <option value="todo">To Do</option>
-                <option value="inProgress">In Progress</option>
-                <option value="done">Done</option>
+                <option value="todo">To do</option>
+                <option value="inProgress">In progress</option>
+                <option value="done">Completed</option>
               </select>
             </label>
 
-            <label className="flex flex-col gap-1">
-              <span className="text-xs font-semibold text-gray-700">Priority</span>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-slate-700">Priority</span>
               <select
                 value={priority}
-                onChange={(e) => setPriority(e.target.value as Priority)}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+                onChange={(event) => setPriority(event.target.value as Priority)}
+                className={CONTROL_CLASS}
               >
-                {PRIORITIES.map((p) => (
-                  <option key={p} value={p}>
-                    {p[0].toUpperCase() + p.slice(1)}
+                {PRIORITIES.map((option) => (
+                  <option key={option} value={option}>
+                    {option[0].toUpperCase() + option.slice(1)}
                   </option>
                 ))}
               </select>
             </label>
 
-            <label className="md:col-span-2 flex flex-col gap-1">
-              <span className="text-xs font-semibold text-gray-700">Tags</span>
+            <label className="flex flex-col gap-1.5 md:col-span-2">
+              <span className="text-xs font-semibold text-slate-700">Tags</span>
               <input
                 value={tagsInput}
-                onChange={(e) => setTagsInput(e.target.value)}
-                className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+                onChange={(event) => setTagsInput(event.target.value)}
+                className={CONTROL_CLASS}
                 placeholder="comma, separated"
               />
             </label>
 
-            <label className="md:col-span-2 flex flex-col gap-1">
-              <span className="text-xs font-semibold text-gray-700">Deadline (optional)</span>
+            <label className="flex flex-col gap-1.5 md:col-span-2">
+              <span className="text-xs font-semibold text-slate-700">Deadline (optional)</span>
               <input
                 type="date"
                 value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+                onChange={(event) => setDeadline(event.target.value)}
+                className={CONTROL_CLASS}
               />
             </label>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t p-4">
+        <div className="flex flex-col-reverse justify-end gap-2 border-t border-slate-100 p-5 sm:flex-row">
           <button
             type="button"
-            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             onClick={onClose}
           >
             Cancel
           </button>
           <button
             type="button"
-            className="rounded-lg bg-purple-600 px-3 py-2 text-sm font-medium text-white hover:bg-purple-700"
+            className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
             onClick={() => {
-              const patch = {
+              updateTask(taskId, {
                 description: description.trim(),
                 status,
                 tags: parseTags(tagsInput),
                 priority,
-                deadline: deadline ? deadline : undefined,
+                deadline: deadline || undefined,
                 updatedAt: Date.now(),
-              }
-
-              updateTask(taskId, patch)
+              })
               onClose()
             }}
           >
@@ -171,4 +210,3 @@ export function TaskModal({ taskId, onClose }: Props) {
     </div>
   )
 }
-

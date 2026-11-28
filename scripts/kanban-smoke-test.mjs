@@ -9,7 +9,10 @@ function todayISO() {
 }
 
 async function run() {
-  const browser = await chromium.launch()
+  const launchOptions = process.env.PLAYWRIGHT_BROWSER_CHANNEL
+    ? { channel: process.env.PLAYWRIGHT_BROWSER_CHANNEL }
+    : {}
+  const browser = await chromium.launch(launchOptions)
   const context = await browser.newContext()
 
   const page = await context.newPage()
@@ -33,6 +36,21 @@ async function run() {
 
   // --- Verify card appears ---
   await page.getByText('Test Task 1', { exact: true }).waitFor({ state: 'visible' })
+
+  // --- Verify search and priority filtering ---
+  const search = page.getByRole('searchbox', { name: 'Search tasks' })
+  const priorityFilter = page.getByRole('combobox', { name: 'Filter by priority' })
+  const taskCards = page.locator('[data-rbd-draggable-id]')
+
+  await search.fill('no matching task')
+  if ((await taskCards.count()) !== 0) throw new Error('search should hide non-matching tasks')
+  await search.fill('Test Task 1')
+  await priorityFilter.selectOption('low')
+  if ((await taskCards.count()) !== 0) throw new Error('priority filter should hide tasks with another priority')
+  await priorityFilter.selectOption('high')
+  if ((await taskCards.count()) !== 1) throw new Error('priority filter should show matching tasks')
+  await search.fill('')
+  await priorityFilter.selectOption('all')
 
   // --- Open modal and edit ---
   await page.getByText('Test Task 1', { exact: true }).click()
@@ -106,6 +124,21 @@ async function run() {
   const titleCount = await page.getByText('Test Task 1').count()
   if (titleCount === 0) throw new Error('Task title not found in DOM after reload')
   await page.getByText('Test Task 1').first().waitFor({ state: 'visible' })
+
+  // --- Verify corrupt storage is preserved until replacement is explicitly confirmed ---
+  const malformedData = '{"version":1,"tasksById":"invalid","columnOrder":{}}'
+  await page.evaluate((value) => localStorage.setItem('kanbanTasksV1', value), malformedData)
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await page.getByRole('alert').waitFor({ state: 'visible' })
+  const preservedData = await page.evaluate(() => localStorage.getItem('kanbanTasksV1'))
+  if (preservedData !== malformedData) throw new Error('corrupt saved data was overwritten without confirmation')
+
+  await page.getByRole('button', { name: 'Replace saved data with this board' }).click()
+  await page.getByRole('alert').waitFor({ state: 'hidden' })
+  const replacedData = await page.evaluate(() => localStorage.getItem('kanbanTasksV1'))
+  if (!replacedData || JSON.parse(replacedData).version !== 1) {
+    throw new Error('explicit storage replacement did not save a valid board')
+  }
 
   await browser.close()
   return true

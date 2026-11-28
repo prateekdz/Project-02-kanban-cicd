@@ -8,14 +8,24 @@ type Props = {
   tasks: Task[]
   onOpenTask: (taskId: string) => void
   onDeleteTask: (taskId: string) => void
+  hasFilters: boolean
 }
 
-export function TaskColumn({ status, title, tasks, onOpenTask, onDeleteTask }: Props) {
+const ACCENTS: Record<Status, string> = {
+  todo: 'bg-violet-500',
+  inProgress: 'bg-sky-500',
+  done: 'bg-emerald-500',
+}
+
+export function TaskColumn({ status, title, tasks, onOpenTask, onDeleteTask, hasFilters }: Props) {
   return (
-    <section className="flex min-h-[320px] flex-col rounded-2xl border bg-gray-50 p-3">
-      <header className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
-        <span className="rounded-full bg-white px-2 py-0.5 text-xs text-gray-600">
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3.5">
+        <div className="flex items-center gap-2.5">
+          <span aria-hidden="true" className={['size-2.5 rounded-full', ACCENTS[status]].join(' ')} />
+          <h3 className="text-sm font-bold text-slate-800">{title}</h3>
+        </div>
+        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold tabular-nums text-slate-600">
           {tasks.length}
         </span>
       </header>
@@ -26,8 +36,8 @@ export function TaskColumn({ status, title, tasks, onOpenTask, onDeleteTask }: P
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={[
-              'flex flex-1 flex-col gap-2 rounded-xl p-2 transition',
-              snapshot.isDraggingOver ? 'bg-purple-50' : 'bg-white/60',
+              'flex min-h-[220px] flex-col gap-3 p-3 transition-colors sm:min-h-[280px]',
+              snapshot.isDraggingOver ? 'bg-indigo-50' : 'bg-slate-50/70',
             ].join(' ')}
           >
             {tasks.map((task, index) => (
@@ -39,6 +49,11 @@ export function TaskColumn({ status, title, tasks, onOpenTask, onDeleteTask }: P
                 onDelete={onDeleteTask}
               />
             ))}
+            {tasks.length === 0 ? (
+              <p className="my-auto rounded-xl border border-dashed border-slate-200 px-4 py-7 text-center text-xs leading-5 text-slate-500">
+                {hasFilters ? 'No tasks match these filters.' : 'No tasks here yet. Add one above or drag it here.'}
+              </p>
+            ) : null}
             {provided.placeholder}
           </div>
         )}

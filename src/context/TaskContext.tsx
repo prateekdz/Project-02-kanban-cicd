@@ -1,6 +1,13 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { NewTaskInput, Status, Task, TaskPatch } from '../types/tasks'
-import { applyPatch, defaultBoardState, loadBoardState, normalizeTags, saveBoardState } from '../lib/storage'
+import {
+  applyPatch,
+  defaultBoardState,
+  loadBoardState,
+  normalizeTags,
+  saveBoardState,
+  type BoardStateV1,
+} from '../lib/storage'
 
 /* eslint-disable react-refresh/only-export-components */
 
@@ -12,9 +19,34 @@ type TaskContextValue = {
   deleteTask: (id: string) => void
   moveTask: (taskId: string, destinationStatus: Status, destinationIndex: number) => void
   moveTaskByStatus: (taskId: string, newStatus: Status) => void
+  storageError: string | null
+  replaceSavedBoard: () => void
 }
 
 const TaskContext = createContext<TaskContextValue | undefined>(undefined)
+
+type InitialBoard = {
+  state: BoardStateV1
+  storageReady: boolean
+  storageError: string | null
+}
+
+function readInitialBoard(): InitialBoard {
+  if (typeof window === 'undefined') {
+    return { state: defaultBoardState(), storageReady: false, storageError: null }
+  }
+
+  try {
+    return { state: loadBoardState(), storageReady: true, storageError: null }
+  } catch {
+    return {
+      state: defaultBoardState(),
+      storageReady: false,
+      storageError:
+        'Saved tasks could not be read. Existing browser data has been preserved, and this board will not be saved until you confirm replacement.',
+    }
+  }
+}
 
 function createId() {
   // Prefer the built-in UUID generator when available.
@@ -23,22 +55,42 @@ function createId() {
 }
 
 export function TaskProvider({ children }: { children: React.ReactNode }) {
-  const initialState = (() => {
-    try {
-      if (typeof window === 'undefined') return defaultBoardState()
-      return loadBoardState()
-    } catch {
-      return defaultBoardState()
-    }
-  })()
+  const [initialBoard] = useState(readInitialBoard)
 
-  const [tasksById, setTasksById] = useState<Record<string, Task>>(() => initialState.tasksById)
-  const [columnOrder, setColumnOrder] = useState<Record<Status, string[]>>(() => initialState.columnOrder)
+  const [tasksById, setTasksById] = useState<Record<string, Task>>(() => initialBoard.state.tasksById)
+  const [columnOrder, setColumnOrder] = useState<Record<Status, string[]>>(
+    () => initialBoard.state.columnOrder
+  )
+  const [storageReady, setStorageReady] = useState(initialBoard.storageReady)
+  const [storageError, setStorageError] = useState(initialBoard.storageError)
+
+  const reportStorageFailure = useCallback((message: string) => {
+    setStorageReady(false)
+    setStorageError(message)
+  }, [])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    saveBoardState({ version: 1, tasksById, columnOrder })
-  }, [tasksById, columnOrder])
+    if (typeof window === 'undefined' || !storageReady) return
+    try {
+      saveBoardState({ version: 1, tasksById, columnOrder })
+    } catch {
+      // Report external storage failures while preventing further automatic writes.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      reportStorageFailure(
+        'Browser storage is unavailable. Changes are not being saved; check storage access or confirm replacing the saved data.'
+      )
+    }
+  }, [columnOrder, reportStorageFailure, storageReady, tasksById])
+
+  const replaceSavedBoard = useCallback(() => {
+    try {
+      saveBoardState({ version: 1, tasksById, columnOrder })
+      setStorageReady(true)
+      setStorageError(null)
+    } catch {
+      reportStorageFailure('The board could not be saved to browser storage. Check browser storage access and try again.')
+    }
+  }, [columnOrder, reportStorageFailure, tasksById])
 
   const addTask = useCallback((input: NewTaskInput) => {
     const now = Date.now()
@@ -175,8 +227,20 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       deleteTask,
       moveTask,
       moveTaskByStatus,
+      storageError,
+      replaceSavedBoard,
     }),
-    [tasksById, columnOrder, addTask, updateTask, deleteTask, moveTask, moveTaskByStatus]
+    [
+      tasksById,
+      columnOrder,
+      addTask,
+      updateTask,
+      deleteTask,
+      moveTask,
+      moveTaskByStatus,
+      storageError,
+      replaceSavedBoard,
+    ]
   )
 
   return <TaskContext.Provider value={value}>{children}</TaskContext.Provider>
